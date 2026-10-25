@@ -1,13 +1,55 @@
-# CBT-Journal-Analytics-System
-Googleフォームに自由記述で日記を書き、その内容をGeminiで分析し、Notionへ自動保存するシステムです。
-# CBT Journal Analysis System
+# Journal Analysis System
 
-Googleフォームに自由記述で日記を書き、その内容をGeminiで分析し、Notionへ自動保存するシステムです。
+Googleフォームに日記を書き、Notionに保存・分析するジャーナルシステムです。
 
-## 目的
+## 全体構成
 
-日々のジャーナルをAIで分析し、
+```text
+Google Form
+↓
+Google Spreadsheet
+↓
+Google Apps Script
+↓
+Notion
+↓
+Notion AIでDaily分析
+```
 
+月末・年末は、GPTがNotion内のデータをMCP経由で参照して長期分析を行います。
+
+```text
+Notion
+↓
+MCP
+↓
+GPT
+↓
+月次 / 年次レポート
+↓
+Notion保存
+↓
+Gmail送信
+```
+
+## 使用技術
+
+- Google Forms
+- Google Spreadsheet
+- Google Apps Script
+- Notion
+- Notion AI
+- Notion MCP
+- GPT
+- Gmail
+
+## Daily
+
+フォームに日記を自由記述します。
+
+GASでNotionへ保存し、Notion AIで以下を整理します。
+
+- 状況
 - 感情
 - 自動思考
 - 認知パターン
@@ -16,119 +58,46 @@ Googleフォームに自由記述で日記を書き、その内容をGeminiで�
 - 気づき
 - 次にできること
 
-などを整理します。一番は、自分の認知を客観的に評価することが目的。また、長期的な自分の思考のトレンド、変化を記録し評価するため。
+## Monthly
 
-また、月末・年末には一定期間のジャーナルをまとめて分析し、思考や感情の変化を振り返れるレポートを自分のメールに配信する。
-
-## 全体構成
-
-```text
-Google Form
-    ↓
-Google Spreadsheet
-    ↓
-Google Apps Script
-    ↓
-Gemini API
-    ↓
-Notion
-```
-
-月次・年次処理では、Spreadsheetから対象期間のジャーナルを取得し、Geminiでまとめて分析します。
-
-```text
-Spreadsheet
-    ↓
-GAS
-    ↓
-Gemini
-    ↓
-Notion
-    ↓
-Gmail（必要に応じて）
-```
-
-## 使用技術
-
-- Google Forms
-- Google Spreadsheet
-- Google Apps Script
-- Gemini API
-- Notion API
-- Gmail
-
-## 分析タイミング
-
-### Daily
-
-フォーム送信ごとに、そのジャーナル1件をGeminiで分析します。
-
-分析結果はNotionへ保存します。
-
-将来的には、Notionで保存した内容に対して、NotionのAIエージェントなどを利用し、さらに活用できる方向を模索している。
-
-### Monthly
-
-月末に、その月のジャーナルをすべて取得して分析します。
+その月のジャーナルとDaily分析をGPTが参照し、月次レポートを作成します。
 
 主に以下を分析します。
 
-- 感情の傾向
-- 思考の傾向
-- 行動の傾向
+- 感情・思考・行動の傾向
 - 繰り返しているパターン
-- 変化した部分
-
-### Yearly
-
-年末に、その年のジャーナルをまとめて分析します。
-
-主に以下を分析します。
-
-- 1年間のトレンドその変化
-- 繰り返した思考
+- 月内での思考の変化
 - 改善した部分
 - 残っているパターン
+- 来月観察したいこと
 
-## Google Form
+レポートはNotionへ保存し、Gmailにも送信します。
 
-設問は1つだけにします。
+## Yearly
 
-> 今日考えたこと、感じたこと、起きたことなどを自由に書いてください。
+月次レポートを中心に1年間を分析します。
 
-## Notion
+主に以下を分析します。
 
-以下のプロパティを使用します。
+- 1年間の思考の変化
+- 感情の変化
+- 行動・習慣の変化
+- 長期間繰り返したパターン
+- 改善した部分
+- 残っている課題
+- 1年前との比較
 
-| プロパティ | 型 |
-| --- | --- |
-| タイトル | Title |
-| 日付 | Date |
-| 種別 | Select |
-| notion AI | Summary |
+レポートはNotionへ保存し、Gmailにも送信します。
 
-## 開発方針
+## 役割
 
-まず各機能を個別に動作確認し、その後自動化します。
-
-1. Google Form → Spreadsheet
-2. GASからSpreadsheetを読む
-3. GAS → Gemini API
-4. Geminiの回答をログに表示
-5. GAS → Notion API
-6. フォーム送信時に自動実行
-7. 月次処理
-8. 年次処理
-9. Gmail送信
-
-## 開発環境
-
-Google Spreadsheetから以下を開いて開発します。
-
-```text
-拡張機能
-↓
-Apps Script
-```
-
-GASエディタ上で実装・動作確認を行い、コードはGitHubでも管理します。
+| 技術 | 役割 |
+|---|---|
+| Google Form | 日記入力 |
+| Spreadsheet | 一時保存 |
+| GAS | Notionへの転送・自動処理 |
+| Notion | データ・レポート保存 |
+| Notion AI | Daily分析 |
+| MCP | GPTとNotionを接続 |
+| GPT | 月次・年次分析 |
+| Gmail | レポート通知 |
