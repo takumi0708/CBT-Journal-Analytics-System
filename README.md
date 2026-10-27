@@ -1,6 +1,6 @@
 # Journal Analysis System
 
-Google Formで日記（ジャーナリング）を書き、Notionに保存・分析するシステムです。Notion AI と Chat GPTで短期、長期の思考の癖などを分析する。
+Google Formで日記（ジャーナリング）を書き、スプレッドシート、Notionに保存・分析するシステムです。Notion AI と Chat GPTで短期、長期の思考の癖などを分析する。
 
 ## 目的
 
