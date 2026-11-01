@@ -9,14 +9,9 @@
 */
 
 function onFormSubmit(e) {
-
-  // =============================
-  // 1. フォーム送信されたデータを取得
-  // =============================
-
-  // 例：
-  // A列 = タイムスタンプ
-  // B列 = ジャーナル本文
+  // =========================
+  // 1. フォーム回答を取得
+  // =========================
 
   const timestamp = e.values[0];
   const journal = e.values[1];
@@ -25,10 +20,9 @@ function onFormSubmit(e) {
     throw new Error("ジャーナル本文がありません。");
   }
 
-
-  // =============================
-  // 2. 日付を作る
-  // =============================
+  // =========================
+  // 2. 日付を作成
+  // =========================
 
   const date = new Date(timestamp);
 
@@ -40,12 +34,12 @@ function onFormSubmit(e) {
 
   const title = formattedDate + " Daily";
 
+  // =========================
+  // 3. Script Properties取得
+  // =========================
 
-  // =============================
-  // 3. Notion設定
-  // =============================
-
-  const properties = PropertiesService.getScriptProperties();
+  const properties =
+    PropertiesService.getScriptProperties();
 
   const notionToken =
     properties.getProperty("NOTION_TOKEN");
@@ -53,19 +47,66 @@ function onFormSubmit(e) {
   const databaseId =
     properties.getProperty("NOTION_DATABASE_ID");
 
+  if (!notionToken) {
+    throw new Error("NOTION_TOKEN がありません。");
+  }
 
-  // =============================
-  // 4. Notionへ送るデータ
-  // =============================
+  if (!databaseId) {
+    throw new Error("NOTION_DATABASE_ID がありません。");
+  }
+
+  // =========================
+  // 4. ジャーナルを2000文字以下に分割
+  // =========================
+
+  const journalChunks = splitText(journal, 1900);
+
+  // Journal見出し
+  const children = [
+    {
+      object: "block",
+      type: "heading_2",
+      heading_2: {
+        rich_text: [
+          {
+            type: "text",
+            text: {
+              content: "Journal"
+            }
+          }
+        ]
+      }
+    }
+  ];
+
+  // 分割した本文をparagraphとして追加
+  journalChunks.forEach(chunk => {
+    children.push({
+      object: "block",
+      type: "paragraph",
+      paragraph: {
+        rich_text: [
+          {
+            type: "text",
+            text: {
+              content: chunk
+            }
+          }
+        ]
+      }
+    });
+  });
+
+  // =========================
+  // 5. Notionへ送るデータ
+  // =========================
 
   const payload = {
-
     parent: {
       database_id: databaseId
     },
 
     properties: {
-
       "タイトル": {
         title: [
           {
@@ -83,54 +124,18 @@ function onFormSubmit(e) {
       },
 
       "種別": {
-        multi_select: [
-          {
-            name: "Daily"
-          }
-        ]
+        select: {
+          name: "Daily"
+        }
       }
     },
 
-    children: [
-
-      {
-        object: "block",
-        type: "heading_2",
-
-        heading_2: {
-          rich_text: [
-            {
-              type: "text",
-              text: {
-                content: "Journal"
-              }
-            }
-          ]
-        }
-      },
-
-      {
-        object: "block",
-        type: "paragraph",
-
-        paragraph: {
-          rich_text: [
-            {
-              type: "text",
-              text: {
-                content: journal
-              }
-            }
-          ]
-        }
-      }
-    ]
+    children: children
   };
 
-
-  // =============================
-  // 5. Notion APIへ送信
-  // =============================
+  // =========================
+  // 6. Notion APIへ送信
+  // =========================
 
   const response = UrlFetchApp.fetch(
     "https://api.notion.com/v1/pages",
@@ -149,16 +154,59 @@ function onFormSubmit(e) {
     }
   );
 
+  // =========================
+  // 7. 結果確認
+  // =========================
 
-  // =============================
-  // 6. エラーチェック
-  // =============================
+  const statusCode =
+    response.getResponseCode();
 
-  const statusCode = response.getResponseCode();
+  const responseText =
+    response.getContentText();
 
-  if (statusCode < 200 || statusCode >= 300) {
+  Logger.log(
+    "statusCode: " + statusCode
+  );
+
+  Logger.log(
+    responseText
+  );
+
+  if (
+    statusCode < 200 ||
+    statusCode >= 300
+  ) {
     throw new Error(
-      "Notion API エラー: " + response.getContentText()
+      "Notion API エラー: " +
+      responseText
     );
   }
+
+  Logger.log(
+    "Notionへの保存に成功しました。"
+  );
+}
+
+
+// ====================================
+// 長い文章を指定文字数以下に分割する
+// ====================================
+
+function splitText(text, maxLength) {
+  const chunks = [];
+
+  for (
+    let i = 0;
+    i < text.length;
+    i += maxLength
+  ) {
+    chunks.push(
+      text.substring(
+        i,
+        i + maxLength
+      )
+    );
+  }
+
+  return chunks;
 }
